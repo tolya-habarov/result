@@ -12,8 +12,8 @@ def test_pattern_matching_on_ok_type() -> None:
         case Ok(value):
             reached = True
 
-    assert value == "yay"
-    assert reached
+    assert value == "yay"  # type:ignore
+    assert reached  # type:ignore
 
 
 def test_pattern_matching_on_err_type() -> None:
@@ -25,5 +25,5 @@ def test_pattern_matching_on_err_type() -> None:
         case Err(value):
             reached = True
 
-    assert value == "nay"
-    assert reached
+    assert value == "nay"  # type:ignore
+    assert reached  # type:ignore

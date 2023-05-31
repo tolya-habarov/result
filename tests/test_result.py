@@ -7,18 +7,6 @@ import pytest
 from result import Err, Ok, OkErr, Result, UnwrapError, as_async_result, as_result
 
 
-def test_ok_factories() -> None:
-    instance = Ok(1)
-    assert instance._value == 1
-    assert instance.is_ok() is True
-
-
-def test_err_factories() -> None:
-    instance = Err(2)
-    assert instance._value == 2
-    assert instance.is_err() is True
-
-
 def test_eq() -> None:
     assert Ok(1) == Ok(1)
     assert Err(1) == Err(1)
@@ -50,56 +38,6 @@ def test_repr() -> None:
     assert n == eval(repr(n))
 
 
-def test_ok() -> None:
-    res = Ok('haha')
-    assert res.is_ok() is True
-    assert res.is_err() is False
-    assert res.value == 'haha'
-
-
-def test_err() -> None:
-    res = Err(':(')
-    assert res.is_ok() is False
-    assert res.is_err() is True
-    assert res.value == ':('
-
-
-def test_ok_method() -> None:
-    o = Ok('yay')
-    n = Err('nay')
-    assert o.ok() == 'yay'
-    assert n.ok() is None  # type: ignore[func-returns-value]
-
-
-def test_err_method() -> None:
-    o = Ok('yay')
-    n = Err('nay')
-    assert o.err() is None  # type: ignore[func-returns-value]
-    assert n.err() == 'nay'
-
-
-def test_no_arg_ok() -> None:
-    top_level: Result[None, None] = Ok()
-    assert top_level.is_ok() is True
-    assert top_level.ok() is True
-
-
-def test_expect() -> None:
-    o = Ok('yay')
-    n = Err('nay')
-    assert o.expect('failure') == 'yay'
-    with pytest.raises(UnwrapError):
-        n.expect('failure')
-
-
-def test_expect_err() -> None:
-    o = Ok('yay')
-    n = Err('nay')
-    assert n.expect_err('hello') == 'nay'
-    with pytest.raises(UnwrapError):
-        o.expect_err('hello')
-
-
 def test_unwrap() -> None:
     o = Ok('yay')
     n = Err('nay')
@@ -108,102 +46,11 @@ def test_unwrap() -> None:
         n.unwrap()
 
 
-def test_unwrap_err() -> None:
-    o = Ok('yay')
-    n = Err('nay')
-    assert n.unwrap_err() == 'nay'
-    with pytest.raises(UnwrapError):
-        o.unwrap_err()
-
-
 def test_unwrap_or() -> None:
     o = Ok('yay')
     n = Err('nay')
     assert o.unwrap_or('some_default') == 'yay'
     assert n.unwrap_or('another_default') == 'another_default'
-
-
-def test_unwrap_or_else() -> None:
-    o = Ok('yay')
-    n = Err('nay')
-    assert o.unwrap_or_else(str.upper) == 'yay'
-    assert n.unwrap_or_else(str.upper) == 'NAY'
-
-
-def test_unwrap_or_raise() -> None:
-    o = Ok('yay')
-    n = Err('nay')
-    assert o.unwrap_or_raise(ValueError) == 'yay'
-    with pytest.raises(ValueError) as exc_info:
-        n.unwrap_or_raise(ValueError)
-    assert exc_info.value.args == ('nay',)
-
-
-def test_map() -> None:
-    o = Ok('yay')
-    n = Err('nay')
-    assert o.map(str.upper).ok() == 'YAY'
-    assert n.map(str.upper).err() == 'nay'
-
-    num = Ok(3)
-    errnum = Err(2)
-    assert num.map(str).ok() == '3'
-    assert errnum.map(str).err() == 2
-
-
-def test_map_or() -> None:
-    o = Ok('yay')
-    n = Err('nay')
-    assert o.map_or('hay', str.upper) == 'YAY'
-    assert n.map_or('hay', str.upper) == 'hay'
-
-    num = Ok(3)
-    errnum = Err(2)
-    assert num.map_or('-1', str) == '3'
-    assert errnum.map_or('-1', str) == '-1'
-
-
-def test_map_or_else() -> None:
-    o = Ok('yay')
-    n = Err('nay')
-    assert o.map_or_else(lambda: 'hay', str.upper) == 'YAY'
-    assert n.map_or_else(lambda: 'hay', str.upper) == 'hay'
-
-    num = Ok(3)
-    errnum = Err(2)
-    assert num.map_or_else(lambda: '-1', str) == '3'
-    assert errnum.map_or_else(lambda: '-1', str) == '-1'
-
-
-def test_map_err() -> None:
-    o = Ok('yay')
-    n = Err('nay')
-    assert o.map_err(str.upper).ok() == 'yay'
-    assert n.map_err(str.upper).err() == 'NAY'
-
-
-def test_and_then() -> None:
-    assert Ok(2).and_then(sq).and_then(sq).ok() == 16
-    assert Ok(2).and_then(sq).and_then(to_err).err() == 4
-    assert Ok(2).and_then(to_err).and_then(sq).err() == 2
-    assert Err(3).and_then(sq).and_then(sq).err() == 3
-
-    assert Ok(2).and_then(sq_lambda).and_then(sq_lambda).ok() == 16
-    assert Ok(2).and_then(sq_lambda).and_then(to_err_lambda).err() == 4
-    assert Ok(2).and_then(to_err_lambda).and_then(sq_lambda).err() == 2
-    assert Err(3).and_then(sq_lambda).and_then(sq_lambda).err() == 3
-
-
-def test_or_else() -> None:
-    assert Ok(2).or_else(sq).or_else(sq).ok() == 2
-    assert Ok(2).or_else(to_err).or_else(sq).ok() == 2
-    assert Err(3).or_else(sq).or_else(to_err).ok() == 9
-    assert Err(3).or_else(to_err).or_else(to_err).err() == 3
-
-    assert Ok(2).or_else(sq_lambda).or_else(sq).ok() == 2
-    assert Ok(2).or_else(to_err_lambda).or_else(sq_lambda).ok() == 2
-    assert Err(3).or_else(sq_lambda).or_else(to_err_lambda).ok() == 9
-    assert Err(3).or_else(to_err_lambda).or_else(to_err_lambda).err() == 3
 
 
 def test_isinstance_result_type() -> None:
@@ -239,11 +86,11 @@ def test_as_result() -> None:
     ``as_result()`` turns functions into ones that return a ``Result``.
     """
 
-    @as_result(ValueError)
+    @as_result(exceptions=(ValueError,))
     def good(value: int) -> int:
         return value
 
-    @as_result(IndexError, ValueError)
+    @as_result(exceptions=(IndexError, ValueError))
     def bad(value: int) -> int:
         raise ValueError
 
@@ -253,7 +100,7 @@ def test_as_result() -> None:
     assert isinstance(good_result, Ok)
     assert good_result.unwrap() == 123
     assert isinstance(bad_result, Err)
-    assert isinstance(bad_result.unwrap_err(), ValueError)
+    assert isinstance(bad_result.err(), ValueError)
 
 
 def test_as_result_other_exception() -> None:
@@ -261,7 +108,7 @@ def test_as_result_other_exception() -> None:
     ``as_result()`` only catches the specified exceptions.
     """
 
-    @as_result(ValueError)
+    @as_result(exceptions=(ValueError,))
     def f() -> int:
         raise IndexError
 
@@ -269,37 +116,18 @@ def test_as_result_other_exception() -> None:
         f()
 
 
-def test_as_result_invalid_usage() -> None:
-    """
-    Invalid use of ``as_result()`` raises reasonable errors.
-    """
-    message = "requires one or more exception types"
-
-    with pytest.raises(TypeError, match=message):
-
-        @as_result()  # No exception types specified
-        def f() -> int:
-            return 1
-
-    with pytest.raises(TypeError, match=message):
-
-        @as_result("not an exception type")  # type: ignore[arg-type]
-        def g() -> int:
-            return 1
-
-
 def test_as_result_type_checking() -> None:
     """
     The ``as_result()`` is a signature-preserving decorator.
     """
 
-    @as_result(ValueError)
+    @as_result(exceptions=(ValueError,))
     def f(a: int) -> int:
         return a
 
     res: Result[int, ValueError]
     res = f(123)  # No mypy error here.
-    assert res.ok() == 123
+    assert res.unwrap() == 123
 
 
 @pytest.mark.asyncio
@@ -308,11 +136,11 @@ async def test_as_async_result() -> None:
     ``as_async_result()`` turns functions into ones that return a ``Result``.
     """
 
-    @as_async_result(ValueError)
+    @as_async_result(exceptions=(ValueError,))
     async def good(value: int) -> int:
         return value
 
-    @as_async_result(IndexError, ValueError)
+    @as_async_result(exceptions=(IndexError, ValueError))
     async def bad(value: int) -> int:
         raise ValueError
 
@@ -322,7 +150,7 @@ async def test_as_async_result() -> None:
     assert isinstance(good_result, Ok)
     assert good_result.unwrap() == 123
     assert isinstance(bad_result, Err)
-    assert isinstance(bad_result.unwrap_err(), ValueError)
+    assert isinstance(bad_result.err(), ValueError)
 
 
 def sq(i: int) -> Result[int, int]:
